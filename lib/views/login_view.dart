@@ -2,16 +2,23 @@
 // Incluye la pantalla de Login (US01), la pantalla del Catálogo con Filtros (US03, US04)
 // y el Cierre de Sesión seguro destruyendo la pila de navegación (US02).
 
+// Importa los componentes visuales básicos de Flutter
 import 'package:flutter/material.dart';
+// Importa el controlador encargado del inicio y cierre de sesión
 import '../controllers/auth_controller.dart';
+// Importa el controlador encargado de traer los productos de internet
 import '../controllers/product_controller.dart';
+// Importa la estructura de datos del usuario
 import '../models/user_model.dart';
+// Importa la estructura de datos del producto
 import '../models/product_model.dart';
+// Importa la pantalla de detalle para poder navegar a ella al tocar un producto
 import 'product_detail_view.dart';
 
 // ==========================================
 // PANTALLA 1: FORMULARIO DE LOGIN (US01)
 // ==========================================
+// Define la pantalla de Login como un widget que puede cambiar de estado (cambiar de pantalla o mostrar errores)
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
 
@@ -19,47 +26,59 @@ class LoginView extends StatefulWidget {
   State<LoginView> createState() => _LoginViewState();
 }
 
+// Clase donde se programa la lógica y la interfaz visual del Login
 class _LoginViewState extends State<LoginView> {
-  // Controladores para capturar el texto ingresado por el usuario
+  // Captura el texto escrito en la caja de Usuario
   final _usernameController = TextEditingController();
+  // Captura el texto escrito en la caja de Contraseña
   final _passwordController = TextEditingController();
   
-  // Instancia del controlador de autenticación
+  // Crea la conexión con la lógica de autenticación
   final _authController = AuthController();
 
+  // Guarda si la app está cargando para mostrar el círculo de espera
   bool _cargando = false;
+  // Guarda el mensaje de error si el usuario se equivoca
   String? _errorMessage;
 
-  // Método para procesar el inicio de sesión
+  // Función que se ejecuta al presionar el botón "INGRESAR"
   Future<void> _handleLogin() async {
+    // Lee los textos ingresados quitando espacios extra en los bordes
     final username = _usernameController.text.trim();
+    // Sirve para obtener la contraseña limpia sin espacios
     final password = _passwordController.text.trim();
 
-    // Validar campos vacíos
+    // Sirve para verificar si alguno de los dos campos quedó vacío
     if (username.isEmpty || password.isEmpty) {
+      // Sirve para actualizar la pantalla mostrando el mensaje de advertencia
       setState(() {
         _errorMessage = 'Por favor ingresa usuario y contraseña';
       });
-      return;
+      return; // Detiene la función para no intentar conectarse a internet si falta un dato
     }
 
+    // Sirve para refrescar la pantalla activando el círculo de carga y borrando errores previos
     setState(() {
       _cargando = true;
       _errorMessage = null;
     });
 
-    // Crear modelo de usuario y llamar al servicio de autenticación
+    // Empaca las credenciales en un objeto UserModel
     final user = UserModel(username: username, password: password);
+    // Envía los datos al controlador para validar el ingreso en el servidor
     final result = await _authController.login(user);
 
+    // Sirve para confirmar que la pantalla siga activa antes de realizar un cambio visual
     if (!mounted) return;
 
+    // Sirve para apagar el indicador de carga una vez que el servidor responde
     setState(() {
       _cargando = false;
     });
 
-    // Si el login es exitoso, redirige al catálogo pasando datos del usuario
+    // Sirve para validar si la respuesta del inicio de sesión fue exitosa
     if (result['success']) {
+      // Reemplaza la pantalla de Login por la del Catálogo (HomeView) pasando los datos de sesión
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -71,13 +90,14 @@ class _LoginViewState extends State<LoginView> {
         ),
       );
     } else {
-      // Muestra mensaje de error devuelto por la API
+      // Sirve para mostrar en pantalla el mensaje de error si las credenciales son incorrectas
       setState(() {
         _errorMessage = result['message'];
       });
     }
   }
 
+  // Se ejecuta automáticamente al cerrar la pantalla para liberar la memoria usada por los campos de texto
   @override
   void dispose() {
     _usernameController.dispose();
@@ -85,6 +105,7 @@ class _LoginViewState extends State<LoginView> {
     super.dispose();
   }
 
+  // Construye la interfaz gráfica de la pantalla de Login
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -111,11 +132,11 @@ class _LoginViewState extends State<LoginView> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Ícono decorativo en lila neón
+                // Ícono decorativo de candado
                 const Icon(Icons.lock_person, size: 80, color: Color(0xFFE040FB)),
                 const SizedBox(height: 24),
                 
-                // Campo Usuario
+                // Campo de texto para ingresar el usuario
                 TextField(
                   controller: _usernameController,
                   decoration: const InputDecoration(
@@ -125,7 +146,7 @@ class _LoginViewState extends State<LoginView> {
                 ),
                 const SizedBox(height: 16),
                 
-                // Campo Contraseña
+                // Campo de texto para ingresar la contraseña (oculta los caracteres)
                 TextField(
                   controller: _passwordController,
                   obscureText: true,
@@ -136,7 +157,7 @@ class _LoginViewState extends State<LoginView> {
                 ),
                 const SizedBox(height: 16),
                 
-                // Mensaje de error visual si falla el login
+                // Sirve para decidir si se dibuja el texto de error en color rojo en la pantalla
                 if (_errorMessage != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12.0),
@@ -150,10 +171,11 @@ class _LoginViewState extends State<LoginView> {
                     ),
                   ),
                 
-                // Botón de Envío
+                // Botón dinámico que cambia entre la animación de carga o el texto "INGRESAR"
                 SizedBox(
                   width: double.infinity,
                   height: 48,
+                  // Sirve para alternar la vista entre el círculo cargando o el botón según la variable _cargando
                   child: _cargando
                       ? const Center(child: CircularProgressIndicator(color: Color(0xFFE040FB)))
                       : ElevatedButton(
@@ -173,6 +195,7 @@ class _LoginViewState extends State<LoginView> {
 // ==========================================================
 // PANTALLA 2: CATÁLOGO Y FILTROS POR CATEGORÍA (US03, US04, US02)
 // ==========================================================
+// Define la pantalla del catálogo recibiendo la información del usuario autenticado
 class HomeView extends StatefulWidget {
   final String username;
   final String role;
@@ -189,42 +212,50 @@ class HomeView extends StatefulWidget {
   State<HomeView> createState() => _HomeViewState();
 }
 
+// Clase donde se gestiona el catálogo, las categorías y el cierre de sesión
 class _HomeViewState extends State<HomeView> {
+  // Instancia del controlador de productos
   final _productController = ProductController();
+  // Guarda la promesa de la lista de productos descargados
   late Future<List<ProductModel>> _futureProducts;
+  // Guarda la promesa de la lista de categorías descargadas
   late Future<List<String>> _futureCategories;
 
+  // Variable para saber qué filtro de categoría está presionado
   String? _categoriaSeleccionada;
 
+  // Se ejecuta al iniciar la pantalla: pide categorías y productos iniciales
   @override
   void initState() {
     super.initState();
-    // Carga inicial de categorías y productos desde la FakeStoreAPI
     _futureCategories = _productController.fetchCategories();
     _cargarProductos();
   }
 
-  // Método para cargar productos (filtrados o globales)
+  // Método interno que decide qué lista de productos traer de la API
   void _cargarProductos() {
     setState(() {
+      // Sirve para evaluar si hay un filtro aplicado o si debe traer el catálogo completo
       if (_categoriaSeleccionada == null) {
-        _futureProducts = _productController.fetchProducts();
+        _futureProducts = _productController.fetchProducts(); // Trae todos los productos
       } else {
-        _futureProducts = _productController.fetchProductsByCategory(_categoriaSeleccionada!);
+        _futureProducts = _productController.fetchProductsByCategory(_categoriaSeleccionada!); // Trae filtrados
       }
     });
   }
 
-  // US04: Método para aplicar o remover filtro al tocar una categoría
+  // Método que activa o desactiva la categoría tocada por el usuario
   void _filtrarPorCategoria(String? categoria) {
+    // Sirve para revisar si el usuario volvió a tocar la misma categoría activa para desactivarla
     if (_categoriaSeleccionada == categoria) {
-      _categoriaSeleccionada = null; // Remueve el filtro si vuelve a tocarlo
+      _categoriaSeleccionada = null; // Quita el filtro
     } else {
-      _categoriaSeleccionada = categoria;
+      _categoriaSeleccionada = categoria; // Aplica la nueva categoría
     }
     _cargarProductos();
   }
 
+  // Construye la vista del catálogo completo con barra superior, filtros y cuadrícula
   @override
   Widget build(BuildContext context) {
     final authController = AuthController();
@@ -233,16 +264,17 @@ class _HomeViewState extends State<HomeView> {
       appBar: AppBar(
         title: Text('Catálogo (${widget.role})'),
         actions: [
-          // US02: Botón de Cierre de Sesión seguro
+          // Botón con ícono de salida para cerrar la sesión
           IconButton(
             icon: const Icon(Icons.logout, color: Color(0xFFE040FB)),
             tooltip: 'Cerrar Sesión',
             onPressed: () async {
-              // 1. Limpia las credenciales almacenadas localmente
+              // Limpia las credenciales guardadas
               await authController.logout();
               
+              // Sirve para validar que la pantalla siga montada antes de realizar la redirección
               if (context.mounted) {
-                // 2. Destruye la pila de navegación para impedir regresar con el botón "Atrás"
+                // Borra todo el historial de pantallas y regresa obligatoriamente al Login
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => const LoginView()),
@@ -255,10 +287,11 @@ class _HomeViewState extends State<HomeView> {
       ),
       body: Column(
         children: [
-          // US04: Barra horizontal desplazable para filtrar por categorías
+          // Renderiza la barra horizontal de filtros por categoría
           FutureBuilder<List<String>>(
             future: _futureCategories,
             builder: (context, snapshot) {
+              // Sirve para validar si la API ya envió la lista de categorías
               if (snapshot.hasData) {
                 final categorias = snapshot.data ?? [];
                 return Container(
@@ -268,7 +301,7 @@ class _HomeViewState extends State<HomeView> {
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     children: [
-                      // Chip para resetear filtros (Todos)
+                      // Botón tipo "Chip" para mostrar todos los productos sin filtro
                       Padding(
                         padding: const EdgeInsets.only(right: 8.0),
                         child: FilterChip(
@@ -277,7 +310,7 @@ class _HomeViewState extends State<HomeView> {
                           onSelected: (_) => _filtrarPorCategoria(null),
                         ),
                       ),
-                      // Chips dinámicos provenientes de la API
+                      // Genera un botón "Chip" por cada categoría recibida de la API
                       ...categorias.map((cat) {
                         final estaSeleccionada = _categoriaSeleccionada == cat;
                         return Padding(
@@ -293,21 +326,21 @@ class _HomeViewState extends State<HomeView> {
                   ),
                 );
               }
-              return const SizedBox.shrink();
+              return const SizedBox.shrink(); // Espacio invisible mientras cargan las categorías
             },
           ),
 
-          // US03: Cuadrícula con el listado de productos
+          // Renderiza la lista/cuadrícula con las tarjetas de los productos
           Expanded(
             child: FutureBuilder<List<ProductModel>>(
               future: _futureProducts,
               builder: (context, snapshot) {
-                // Estado de Carga
+                // Sirve para verificar si los productos aún se están descargando de internet
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator(color: Color(0xFFE040FB)));
                 }
 
-                // Manejo de Error de Red con opción de Reintentar
+                // Sirve para confirmar si ocurrió un fallo de conexión o error de servidor
                 if (snapshot.hasError) {
                   return Center(
                     child: Column(
@@ -329,11 +362,12 @@ class _HomeViewState extends State<HomeView> {
 
                 final products = snapshot.data ?? [];
 
+                // Sirve para comprobar si el filtro o la consulta no devolvió ningún resultado
                 if (products.isEmpty) {
                   return const Center(child: Text('No hay productos disponibles.'));
                 }
 
-                // GridView de 2 columnas
+                // Construye la cuadrícula de 2 columnas con los productos
                 return GridView.builder(
                   padding: const EdgeInsets.all(12),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -347,8 +381,9 @@ class _HomeViewState extends State<HomeView> {
                     final product = products[index];
                     return InkWell(
                       borderRadius: BorderRadius.circular(16),
+                      // Esta línea se ejecuta cuando seleccionas/tocas una tarjeta de producto en el catálogo
                       onTap: () {
-                        // Navega al detalle del producto enviando el ID y el Rol
+                        // Navega a la pantalla de detalle enviando el ID único del producto y el Rol del usuario
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -365,7 +400,7 @@ class _HomeViewState extends State<HomeView> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Contenedor blanco para la imagen del producto
+                              // Muestra la imagen del producto descargada desde su URL
                               Expanded(
                                 child: Container(
                                   padding: const EdgeInsets.all(8),
@@ -384,7 +419,7 @@ class _HomeViewState extends State<HomeView> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              // Título del producto
+                              // Muestra el nombre o título del producto
                               Text(
                                 product.title,
                                 maxLines: 2,
@@ -395,7 +430,7 @@ class _HomeViewState extends State<HomeView> {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              // Precio formateado en lila
+                              // Muestra el precio formateado con dos decimales
                               Text(
                                 '\$${product.price.toStringAsFixed(2)}',
                                 style: const TextStyle(
