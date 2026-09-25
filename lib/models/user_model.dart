@@ -1,35 +1,42 @@
-//user_model.dart contiene la estructura de datos para almacenar únicamente el usuario y la contraseña, 
-//es decir, guarda los datos de la persona que intenta entrar.
+// user_model.dart contiene la estructura de datos para almacenar únicamente el usuario y la contraseña, 
+// es decir, guarda los datos de la persona que intenta entrar.
 class UserModel {
-  final int? id; // Guarda un número de identificación (puede estar vacío al principio).
-  final String username; // Guarda el texto del nombre de usuario.
-  final String password; // Guarda el texto de la contraseña.
-  final String? role; // Guarda el tipo de permiso que tiene (Administrador, Cliente, etc.).
+  // Número único de identificación (el signo ? significa que puede ser nulo o estar vacío)
+  final int? id;
+  // Nombre de usuario para iniciar sesión (obligatorio)
+  final String username;
+  // Contraseña del usuario (obligatoria)
+  final String password;
+  // Tipo de permiso o rol en la app (opcional, puede ser nulo)
+  final String? role;
 
-  // Esta función sirve para crear el paquete con los datos del usuario.
+  // Constructor: Sirve para crear una nueva ficha de usuario con sus datos
   UserModel({
-    this.id, // Recibe el número de id si lo hay.
-    required this.username, // Pide de forma obligatoria el nombre de usuario.
-    required this.password, // Pide de forma obligatoria la contraseña.
-    this.role, // Recibe el rol si lo hay.
+    this.id, // Recibe el ID (opcional)
+    required this.username, // Obliga a entregar el nombre de usuario
+    required this.password, // Obliga a entregar la contraseña
+    this.role, // Recibe el rol (opcional)
   });
 
-  // Esta función convierte los datos del usuario a un formato de texto simple para enviarlos por internet.
+  // Convierte los datos del usuario en un formato de texto (JSON) listo para enviarse a un servidor de internet
   Map<String, dynamic> toJson() {
     return {
-      'username': username, // Pone el nombre de usuario en la lista.
-      'password': password, // Pone la contraseña en la lista.
+      'username': username, // Empaca el nombre de usuario
+      'password': password, // Empaca la contraseña
     };
   }
 
-  // Esta regla decide qué tipo de usuario es según su número de id.
+  // Función que asigna automáticamente un rol según el número de ID que tenga el usuario
   static String determinarRol(int userId) {
-    if (userId == 1 || userId == 2) { // Si el número es 1 o 2:
-      return 'Administrador'; // Le asigna la palabra Administrador.
-    } else if (userId == 3) { // Si el número es 3:
-      return 'Auditor'; // Le asigna la palabra Auditor.
-    } else { // Si es cualquier otro número:
-      return 'Cliente'; // Le asigna la palabra Cliente.
+    // Si el ID es 1 o 2, la app lo considera Administrador
+    if (userId == 1 || userId == 2) {
+      return 'Administrador';
+    // Si el ID es 3, le da el rol de Auditor
+    } else if (userId == 3) {
+      return 'Auditor';
+    // Para cualquier otro número de ID (4, 5, 6...), lo asigna como Cliente
+    } else {
+      return 'Cliente';
     }
   }
 }
